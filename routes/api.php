@@ -18,5 +18,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('score', 'api\apiController@score');
-Route::post('record', 'api\apiController@record');
+Route::get('initialstatus', 'api\apiController@getInitialStatus');
+Route::post('saveuserinfo', 'api\apiController@record');

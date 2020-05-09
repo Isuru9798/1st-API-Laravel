@@ -3,35 +3,37 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Mytable;
+use App\RegisterDetails;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
 
 class apiController extends Controller
 {
-    public function score(Request $request)
+    public function getInitialStatus(Request $request)
     {
         $res = [];
         $macAddress = $request->get('mac-address');
-        if ($macAddress) {
+        
+        if ( empty($macAddress)) {
             return response()->json('record not found!', 400);
         }
-        $data = Mytable::where('macAddress', $macAddress)->select('timestamp')->first();
-
-        if ($data) {
+        $data = RegisterDetails::where('macAddress', $macAddress)->select('timestamp')->first();
+        if ( !empty($data)) {
             $to = Carbon::parse($data->timestamp);
             $from = Carbon::now();
             $timeDiff = $to->diffInMinutes($from);
             if (($timeDiff / 60) > 24) {
                 $res = [
-                    'winningPoints' => mt_rand(0, 100),
-                    'winningAmmount' => mt_rand(0, 100)
+                    'winningPoints' => mt_rand(50, 100),
+                    'winningAmmount' => mt_rand(50, 100),
+                    'maxTime'=> true
                 ];
             } else {
                 $res = [
-                    'winningPoints' => false,
-                    'winningAmmount' => false
+                    'winningPoints' =>mt_rand(50, 100),
+                    'winningAmmount' => mt_rand(50, 100),
+                    'maxTime'=> false
                 ];
             }
             return response()->json($res, 200);
@@ -39,9 +41,9 @@ class apiController extends Controller
             return response()->json('Record not found', 400);
         }
     }
+    
     public function record(Request $request)
     {
-
         $data = [
             'name' => $request->name,
             'email' => $request->email,
@@ -77,17 +79,17 @@ class apiController extends Controller
 
 
         ######################## Insert Data ########################
-        $data = Mytable::create($data);
+        $data = RegisterDetails::create($data);
 
         $data = [
             'id' => $data->id,
             'name' => $data->name,
             'email' => $data->email,
-            "phoneNumber" => 4444,
+            "mobileNumber" => $data->mobileNumber,
             "deviceInfo" => [
-                "mac-address" => "asd",
-                "deivceId" => "232",
-                "imiNumber" => "asd"
+                "mac-address" =>$data->macAddress,
+                "deivceId" =>$data->deviceId,
+                "imiNumber" => $data->imiNumber,
             ]
         ];
         return response()->json($data, 201);
