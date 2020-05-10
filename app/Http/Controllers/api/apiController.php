@@ -55,68 +55,68 @@ class apiController extends Controller
 
     public function record(Request $request)
     {
-        if (!empty($request->token)) {
-            $macDcrypt = $this->macReverse($request->deviceInfo['mac-address']);
-            $token = $request->token;
-            if ($macDcrypt === $token) {
-                $data = [
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'mobileNumber' => $request->mobileNumber,
-                    'macAddress' => $request->deviceInfo['mac-address'],
-                    'deviceId' => $request->deviceInfo['deivceId'],
-                    'imiNumber' => $request->deviceInfo['imiNumber'],
-                    'timestamp' => Carbon::now()
-                ];
 
-                ######################## Validate Data ########################
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'mobileNumber' => $request->mobileNumber,
+            'macAddress' => $request->deviceInfo['mac-address'],
+            'deviceId' => $request->deviceInfo['deivceId'],
+            'imiNumber' =>  $request->deviceInfo['imiNumber'],
+            'timestamp' => Carbon::now()
+        ];
 
-                $rules = [
-                    'name' => 'required',
-                    'mobileNumber' => 'required',
-                    'macAddress' => 'required',
-                    'deviceId' => 'required',
-                    'imiNumber' => 'required',
-                ];
-                $messages = [
-                    'name.required' => 'Please enter a name.',
-                    'mobileNumber.required' => 'Please enter a mobile number.',
-                    'macAddress.required' => 'MAC Address not found.',
-                    'deviceId.required' => 'Device Id not found.',
-                    'imiNumber.required' => 'IMI Number not found.'
-                ];
-                $validate = Validator::make($data, $rules, $messages);
-
-                if ($validate->fails()) {
-                    return response()->json($validate->messages(), 400);
-                }
-                ######################## Validate End ########################
-
-
-                ######################## Insert Data ########################
-                $data = RegisterDetails::create($data);
-
-                $data = [
-                    'id' => $data->id,
-                    'token' =>$token,
-                    'name' => $data->name,
-                    'email' => $data->email,
-                    "mobileNumber" => $data->mobileNumber,
-                    "deviceInfo" => [
-                        "mac-address" => $data->macAddress,
-                        "deivceId" => $data->deviceId,
-                        "imiNumber" => $data->imiNumber,
-                    ]
-                ];
-                return response()->json($data, 201);
-            }else{
-                return response()->json("unauthorized1 access!",400);
-            }
-        }else{
-            return response()->json("unauthorized access!",400);
+        ######################## Validate Data ########################
+        if (is_array($request->deviceInfo['imiNumber'])) {
+            $rules = [
+                'name' => 'required',
+                'mobileNumber' => 'required',
+                'macAddress' => 'required',
+                'deviceId' => 'required',
+                'imiNumber' => 'required|array',
+                'imiNumber.*' => 'required|string|distinct',
+            ];
+        } else {
+            $rules = [
+                'name' => 'required',
+                'mobileNumber' => 'required',
+                'macAddress' => 'required',
+                'deviceId' => 'required',
+                'imiNumber' => 'required',
+            ];
         }
 
+        // $messages = [
+        //     'name.required' => 'Please enter a name.',
+        //     'mobileNumber.required' => 'Please enter a mobile number.',
+        //     'macAddress.required' => 'MAC Address not found.',
+        //     'deviceId.required' => 'Device Id not found.',
+        //     'imiNumber.required' => 'IMI Number not found.'
+        // ];
+        $validate = Validator::make($data, $rules);
 
+        if ($validate->fails()) {
+            return response()->json($validate->messages(), 200);
+        }
+        ######################## Validate End ########################
+
+
+        ######################## Insert Data ########################
+        $data['imiNumber'] = json_encode($data['imiNumber']);
+        $response_data = RegisterDetails::create($data);
+
+        $response_data = [
+            'id' => $response_data->id,
+            'name' => $response_data->name,
+            'email' => $response_data->email,
+            "mobileNumber" => $response_data->mobileNumber,
+            "deviceInfo" => [
+                "mac-address" => $response_data->macAddress,
+                "deivceId" => $response_data->deviceId,
+                "imiNumber" =>json_decode($response_data->imiNumber),
+            ]
+        ];
+        return response()->json($response_data, 201);
     }
 
     ############ if you want get mac address using php ################

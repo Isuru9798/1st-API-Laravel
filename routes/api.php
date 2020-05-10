@@ -14,9 +14,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('initialstatus', 'api\apiController@getInitialStatus');
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('initialstatus', 'api\apiController@getInitialStatus');
-Route::post('saveuserinfo', 'api\apiController@record');
+Route::middleware('token')->post('saveuserinfo', 'api\apiController@record');
